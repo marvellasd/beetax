@@ -1,9 +1,9 @@
 typing
 sentence_transformers
-langchain_core.embeddings
+langchain_core
 torch
 langchain_chroma
-langfuse.openai
+langfuse
 dotenv
 re
 langfuse
