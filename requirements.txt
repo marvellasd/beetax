@@ -7,3 +7,4 @@ langchain_chroma
 langfuse
 dotenv
 langfuse
+openai
