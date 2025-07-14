@@ -195,6 +195,5 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,dotenv
-chroma_e5_database/
 .env
 api_key.csv

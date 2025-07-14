@@ -41,46 +41,57 @@ vectorstore = Chroma(
 load_dotenv(override=True)
 langfuse = Langfuse()
 
-api_keys = []
+llama_keys = [
+    os.environ[f"LLAMA_API_KEY_{i}"]
+    for i in range(1, 101)
+    if f"LLAMA_API_KEY_{i}" in os.environ
+]
 
-with open("api_key.csv", newline="") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        api_keys.append(row["API Key"])
+gemini_keys = [
+    os.environ[f"GEMINI_API_KEY_{i}"]
+    for i in range(1, 8)
+    if f"GEMINI_API_KEY_{i}" in os.environ
+]
 
-current_key_index = 0
-used_attempts = 0
+llama_current_idx = 0
+llama_used_attempts = 0
+client_llama = OpenAI(api_key=llama_keys[llama_current_idx], base_url=os.environ["LLAMA_BASE_URL"])
 
-client_llama = OpenAI(
-    api_key=api_keys[current_key_index],
-    base_url=os.environ["LLAMA_BASE_URL"]
-)
+gemini_current_idx = 0
+gemini_used_attempts = 0
+client_gemini = OpenAI(api_key=gemini_keys[gemini_current_idx], base_url=os.environ["GEMINI_BASE_URL"])
 
-def switch_to_next_key():
-    global current_key_index, client_llama, used_attempts
-    current_key_index = (current_key_index + 1) % len(api_keys)
-    used_attempts += 1
+def switch_llama_key():
+    global llama_current_idx, llama_used_attempts, client_llama
+    llama_current_idx = (llama_current_idx + 1) % len(llama_keys)
+    llama_used_attempts += 1
+    client_llama = OpenAI(api_key=llama_keys[llama_current_idx], base_url=os.environ["LLAMA_BASE_URL"])
 
-    next_key = api_keys[current_key_index]
-
-    client_llama = OpenAI(
-        api_key=next_key,
-        base_url=os.environ["LLAMA_BASE_URL"]
-    )
-
-client_gemini = OpenAI(
-    api_key=os.environ["GEMINI_API_KEY"],
-    base_url=os.environ["GEMINI_BASE_URL"]
-)
+def switch_gemini_key():
+    global gemini_current_idx, gemini_used_attempts, client_gemini
+    gemini_current_idx = (gemini_current_idx + 1) % len(gemini_keys)
+    gemini_used_attempts += 1
+    client_gemini = OpenAI(api_key=gemini_keys[gemini_current_idx], base_url=os.environ["GEMINI_BASE_URL"])
 
 @observe(name="llm_rewrite")
 def llm_rewrite(messages):
-    response = client_gemini.chat.completions.create(
-        model="gemini-2.0-flash",
-        messages=messages,
-        temperature=0.1,
-        top_p=0.1)
-    return response.choices[0].message.content.strip()
+    global gemini_used_attempts
+    gemini_used_attempts = 0
+
+    while gemini_used_attempts < len(gemini_keys):
+        try:
+            response = client_gemini.chat.completions.create(
+                model="gemini-2.0-flash",
+                messages=messages,
+                temperature=0.1,
+                top_p=0.1
+            )
+            return response.choices[0].message.content.strip()
+
+        except Exception as e:
+            switch_gemini_key()
+
+    raise Exception("All Gemini API keys have been tried and failed.")
 
 @observe(name="split_user_query")
 def split_user_query(user_query, chat_history=None):
@@ -151,23 +162,23 @@ def retrieve_contexts(sub_questions, vectorstore, top_k=3):
 
 @observe(name="build_and_send_prompt")
 def build_and_send_prompt(messages):
-    global used_attempts
-    used_attempts = 0
+    global llama_used_attempts
+    llama_used_attempts = 0
 
-    while used_attempts < len(api_keys):
+    while llama_used_attempts < len(llama_keys):
         try:
             response = client_llama.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=messages,
                 temperature=0.1,
-                top_p=0.1,
+                top_p=0.1
             )
             return response.choices[0].message.content.strip()
 
         except Exception as e:
-            switch_to_next_key()
+            switch_llama_key()
 
-    raise Exception("All API keys have been tried and failed.")
+    raise Exception("All LLaMA API keys have been tried and failed.")
 
 flag = 0
 messages_history = []
