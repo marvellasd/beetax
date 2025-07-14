@@ -1,4 +1,3 @@
-import langchain
 import os
 from typing import List
 
