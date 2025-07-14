@@ -1,11 +1,9 @@
-
 import streamlit as st
 from PIL import Image
 import pathlib
 import re
 import time
 from chatbot import run_chatbot
-
 
 def load_css(file_path):
    with open(file_path) as f:
