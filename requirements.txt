@@ -6,3 +6,4 @@ langchain_chroma
 langfuse
 dotenv
 langfuse
+sqlite3 == 3.35.0
