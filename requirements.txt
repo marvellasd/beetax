@@ -1,4 +1,3 @@
-os
 typing
 sentence_transformers
 langchain_core.embeddings
