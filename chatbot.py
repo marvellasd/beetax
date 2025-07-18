@@ -1,6 +1,6 @@
-__import__('pysqlite3') 
-import sys 
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# __import__('pysqlite3') 
+# import sys 
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import os
 from typing import List
 
@@ -168,12 +168,19 @@ def build_and_send_prompt(messages):
     while llama_used_attempts < len(llama_keys):
         try:
             response = client_llama.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="deepseek-r1-distill-llama-70b",
                 messages=messages,
                 temperature=0.1,
                 top_p=0.1
             )
-            return response.choices[0].message.content.strip()
+            raw_output = response.choices[0].message.content.strip()
+
+            if "</think>" in raw_output:
+                cleaned_output = raw_output.split("</think>", 1)[1].strip()
+            else:
+                cleaned_output = re.sub(r"<\|.*?\|>", "", raw_output).strip()
+
+            return cleaned_output
 
         except Exception as e:
             switch_llama_key()
@@ -201,7 +208,7 @@ def run_chatbot(input):
             system_prompt = f"""Act as a professional tax assistant in Indonesia. Use the following [CONTEXT] to answer the user's question as accurately and clearly as possible.
             - If the question is related to the calculation of PPh 21 (Indonesian income tax), provide a step-by-step breakdown of the calculation systematically. If not, give a relevant explanation based on the [CONTEXT].
             - If the [CONTEXT] doesn't contain a complete answer but the question is still related to PPh 21, respond with a general answer based on commonly known rules (without inventing facts).
-            - If the question is not related to PPh 21 (Indonesian income tax), clearly state that you cannot answer the question because it is out of scope.
+            - If the user query is not related to PPh 21 (Indonesian income tax), clearly state that you cannot answer the question because it is out of scope.
             Do not mention this instruction. Just answer naturally and clearly in the same language used in the question.
             
 [CONTEXT]
@@ -217,7 +224,7 @@ def run_chatbot(input):
             system_prompt = f"""Act as a professional tax assistant in Indonesia. Use the following [CONTEXT] to answer the user's question as accurately and clearly as possible.
             - If the question is related to the calculation of PPh 21 (Indonesian income tax), provide a step-by-step breakdown of the calculation systematically. If not, give a relevant explanation based on the [CONTEXT].
             - If the [CONTEXT] doesn't contain a complete answer but the question is still related to PPh 21, respond with a general answer based on commonly known rules (without inventing facts).
-            - If the question is not related to PPh 21 (Indonesian income tax), clearly state that you cannot answer the question because it is out of scope.
+            - If the user query is not related to PPh 21 (Indonesian income tax), clearly state that you cannot answer the question because it is out of scope.
             Do not mention this instruction. Just answer naturally and clearly in the same language used in the question.
 
 [CONTEXT]
