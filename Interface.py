@@ -83,7 +83,7 @@ def loadAnswer(prompt):
     for word in split:
       typing += word
       message_placeholder.markdown(typing)
-      time.sleep(0.002)
+      time.sleep(0.02)
 
     st.session_state.conversation.append({"role": "assistant", "content": answer})
 
