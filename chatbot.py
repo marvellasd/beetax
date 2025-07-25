@@ -196,13 +196,21 @@ def build_and_send_prompt(messages):
 
 def get_gspread_client():
     try:
-        service_account_info = st.secrets["google_service_account"]
-        creds = Credentials.from_service_account_info(service_account_info)
-        return gspread.authorize(creds)
+        st.text("Available secrets: " + str(list(st.secrets.keys())))
+        account_info = st.secrets["google_service_account"]
+        creds = Credentials.from_service_account_info(
+            account_info,
+            scopes=["https://www.googleapis.com/auth/spreadsheets",
+                    "https://www.googleapis.com/auth/drive"]
+        )
+        gc = gspread.authorize(creds)
+        st.text("GSpread client berhasil dibuat")
+        return gc
     except Exception as e:
+        st.error(f"[ERROR] GSpread authorization failed: {e}")
         print("[ERROR] GSpread authorization failed:", e)
         return None
-    
+
 def log_to_google_sheets(
     session_id,
     chat_history,
