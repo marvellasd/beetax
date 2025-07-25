@@ -8,3 +8,8 @@ langfuse
 dotenv
 langfuse
 openai
+streamlit
+uuid
+gspread
+pandas
+datetime

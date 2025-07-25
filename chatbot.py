@@ -17,6 +17,13 @@ import re
 from langfuse import Langfuse
 from langfuse import observe
 import csv
+import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
+from gspread_dataframe import set_with_dataframe
+import pandas as pd
+from datetime import datetime
+import uuid
 
 class LangchainE5Embedding(Embeddings):
     def __init__(self, model_name="intfloat/multilingual-e5-large", device=None):
@@ -187,11 +194,57 @@ def build_and_send_prompt(messages):
 
     raise Exception("All LLaMA API keys have been tried and failed.")
 
+def get_gspread_client():
+    try:
+        service_account_info = st.secrets["google_service_account"]
+        creds = Credentials.from_service_account_info(service_account_info)
+        return gspread.authorize(creds)
+    except Exception as e:
+        print("[ERROR] GSpread authorization failed:", e)
+        return None
+    
+def log_to_google_sheets(
+    session_id,
+    chat_history,
+    user_input,
+    sub_questions,
+    retrieved_docs,
+    assistant_response,
+    sheet_name="Chatbot Logs"
+):
+    try:
+        gc = get_gspread_client()
+        if gc is None:
+            return
+
+        sh = gc.open(sheet_name)
+        worksheet = sh.sheet1
+
+        data = {
+            "timestamp": [datetime.now().isoformat()],
+            "session_id": [session_id],
+            "chat_history": ["\n\n".join(str(item) for item in chat_history)],
+            "user_input": [user_input],
+            "sub_questions": ["\n\n".join(sub_questions)],
+            "retrieved_docs": ["\n\n".join(doc.page_content for doc in retrieved_docs)],
+            "assistant_response": [assistant_response]
+        }
+
+        df = pd.DataFrame(data)
+        existing_data = worksheet.get_all_values()
+        start_row = len(existing_data) + 1 if existing_data else 1
+        set_with_dataframe(worksheet, df, row=start_row, include_column_header=(start_row == 1))
+
+    except Exception as e:
+        print("[ERROR] Failed to save to Google Sheets:", e)
+
 flag = 0
 messages_history = []
 
 def run_chatbot(input):
     global flag, messages_history
+
+    session_id = str(uuid.uuid4())
 
     while True:
         user_input = input
@@ -236,5 +289,14 @@ def run_chatbot(input):
         
         assistant_response = build_and_send_prompt(messages_history)
         messages_history.append({"role": "assistant", "content": assistant_response})
+
+        log_to_google_sheets(
+            session_id=session_id,
+            chat_history=chat_history,
+            user_input=user_input,
+            sub_questions=sub_questions,
+            retrieved_docs=results,
+            assistant_response=assistant_response
+        )
 
         return assistant_response
