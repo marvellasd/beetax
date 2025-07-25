@@ -213,7 +213,7 @@ def log_to_google_sheets(
     sheet_name="Chatbot Logs"
 ):
     try:
-        print("1111111111111")
+        st.text("1111111111111")
         gc = get_gspread_client()
         if gc is None:
             return
@@ -221,7 +221,7 @@ def log_to_google_sheets(
         sh = gc.open(sheet_name)
         worksheet = sh.sheet1
 
-        print("222222222222222222")
+        st.text("222222222222222222")
         data = {
             "timestamp": [datetime.now().isoformat()],
             "session_id": [session_id],
@@ -232,12 +232,12 @@ def log_to_google_sheets(
             "assistant_response": [assistant_response]
         }
 
-        print("333333333333333333333333333")
+        st.text("333333333333333333333333333")
         df = pd.DataFrame(data)
         existing_data = worksheet.get_all_values()
         start_row = len(existing_data) + 1 if existing_data else 1
         set_with_dataframe(worksheet, df, row=start_row, include_column_header=(start_row == 1))
-        print("444444444444444444444444444")
+        st.text("444444444444444444444444444")
 
     except Exception as e:
         print("[ERROR] Failed to save to Google Sheets:", e)
@@ -294,6 +294,7 @@ def run_chatbot(input):
         assistant_response = build_and_send_prompt(messages_history)
         messages_history.append({"role": "assistant", "content": assistant_response})
 
+        st.text("Logging to Sheets...")
         log_to_google_sheets(
             session_id=session_id,
             chat_history=chat_history,
@@ -302,5 +303,6 @@ def run_chatbot(input):
             retrieved_docs=results,
             assistant_response=assistant_response
         )
+        st.text("Finish logging...")
 
         return assistant_response
