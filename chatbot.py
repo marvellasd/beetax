@@ -207,7 +207,7 @@ def get_gspread_client():
         return gc
     
     except Exception as e:
-        st.text("[ERROR] GSpread authorization failed:", e)
+        st.error(f"[ERROR] GSpread authorization failed: {e}")
         return None
 
 def log_to_google_sheets(
@@ -243,7 +243,7 @@ def log_to_google_sheets(
         set_with_dataframe(worksheet, df, row=start_row, include_column_header=(start_row == 1))
 
     except Exception as e:
-        st.text("[ERROR] Failed to save to Google Sheets:", e)
+        st.error(f"[ERROR] Failed to save to Google Sheets: {e}")
 
 flag = 0
 messages_history = []
