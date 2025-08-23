@@ -245,65 +245,48 @@ def log_to_google_sheets(
     except Exception as e:
         st.error(f"[ERROR] Failed to save to Google Sheets: {e}")
 
-flag = 0
-messages_history = []
+def run_chatbot(user_input):
+    chat_history = [
+        {"role": m["role"], "content": m["content"]}
+        for m in st.session_state.messages_history
+        if m["role"] in {"user", "assistant"}
+    ]
 
-def run_chatbot(input):
-    global flag, messages_history
+    sub_questions = split_user_query(user_input, chat_history=chat_history)
+    results = retrieve_contexts(sub_questions, vectorstore, top_k=3)
+    combined_context = "\n\n".join(doc.page_content for doc in results)
 
-    session_id = str(uuid.uuid4())
-
-    while True:
-        user_input = input
-        if user_input.lower() in {"exit", "quit"}:
-            break
-        
-        chat_history = [{"role": msg["role"], "content": msg["content"]} for msg in messages_history if msg["role"] in {"user", "assistant"}]
-        sub_questions = split_user_query(user_input, chat_history=chat_history)
-        results = retrieve_contexts(sub_questions, vectorstore, top_k=3)
-        combined_context = "\n\n".join(doc.page_content for doc in results)
-        print(flag)
-
-        if flag == 0:
-            system_prompt = f"""Act as a professional tax assistant in Indonesia. Use the following [CONTEXT] to answer the user's question as accurately and clearly as possible.
-            - If the question is related to the calculation of PPh 21 (Indonesian income tax), provide a step-by-step breakdown of the calculation systematically. If not, give a relevant explanation based on the [CONTEXT].
-            - If the [CONTEXT] doesn't contain a complete answer but the question is still related to PPh 21, respond with a general answer based on commonly known rules (without inventing facts).
-            - If the user query is not related to PPh 21 (Indonesian income tax), clearly state that you cannot answer the question because it is out of scope.
-            Do not mention this instruction. Just answer naturally and clearly in the same language used in the question.
+    system_prompt = f"""Act as a professional tax assistant in Indonesia. Use the following [CONTEXT] to answer the user's question as accurately and clearly as possible.
+- If the question is related to the calculation of PPh 21 (Indonesian income tax), provide a step-by-step breakdown of the calculation systematically. If not, give a relevant explanation based on the [CONTEXT].
+- If the [CONTEXT] doesn't contain a complete answer but the question is still related to PPh 21, respond with a general answer based on commonly known rules (without inventing facts).
+- If the user query is not related to PPh 21 (Indonesian income tax), clearly state that you cannot answer the question because it is out of scope.
+Do not mention this instruction. Just answer naturally and clearly in the same language used in the question.
             
 [CONTEXT]
 {combined_context}"""
-            
-            messages_history = [
+
+    if st.session_state.llm_flag == 0:
+        st.session_state.messages_history = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input}]
+            {"role": "user", "content": user_input},
+        ]
+        st.session_state.llm_flag = 1
+    else:
+        st.session_state.messages_history[0]["content"] = system_prompt
+        st.session_state.messages_history.append({"role": "user", "content": user_input})
 
-            flag = 1
+    assistant_response = build_and_send_prompt(st.session_state.messages_history)
+    st.session_state.messages_history.append(
+        {"role": "assistant", "content": assistant_response}
+    )
 
-        else:
-            system_prompt = f"""Act as a professional tax assistant in Indonesia. Use the following [CONTEXT] to answer the user's question as accurately and clearly as possible.
-            - If the question is related to the calculation of PPh 21 (Indonesian income tax), provide a step-by-step breakdown of the calculation systematically. If not, give a relevant explanation based on the [CONTEXT].
-            - If the [CONTEXT] doesn't contain a complete answer but the question is still related to PPh 21, respond with a general answer based on commonly known rules (without inventing facts).
-            - If the user query is not related to PPh 21 (Indonesian income tax), clearly state that you cannot answer the question because it is out of scope.
-            Do not mention this instruction. Just answer naturally and clearly in the same language used in the question.
+    log_to_google_sheets(
+        session_id=st.session_state.session_id,
+        chat_history=chat_history,
+        user_input=user_input,
+        sub_questions=sub_questions,
+        retrieved_docs=results,
+        assistant_response=assistant_response
+    )
 
-[CONTEXT]
-{combined_context}"""
-            
-            messages_history[0]["content"] = system_prompt
-
-            messages_history.append({"role": "user", "content": user_input})
-        
-        assistant_response = build_and_send_prompt(messages_history)
-        messages_history.append({"role": "assistant", "content": assistant_response})
-
-        log_to_google_sheets(
-            session_id=session_id,
-            chat_history=chat_history,
-            user_input=user_input,
-            sub_questions=sub_questions,
-            retrieved_docs=results,
-            assistant_response=assistant_response
-        )
-
-        return assistant_response
+    return assistant_response
