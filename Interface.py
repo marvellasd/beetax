@@ -41,7 +41,7 @@ if st.session_state.show_container:
     left_co, cent_co,last_co = st.columns([3, 1, 3])
     cent_co.image(image, use_container_width=True)
     
-    st.markdown("<h3 style='text-align: center; margin-bottom: 10vh; margin-top: 2vh; background-color: red;'>Halo, ada yang bisa saya bantu?</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; margin-bottom: 10vh; margin-top: 2vh; '>Halo, ada yang bisa saya bantu?</h3>", unsafe_allow_html=True)
     st.markdown("<br><br>", unsafe_allow_html=True)
     left_space, left_button, left_space, cent_button, cent_space, last_button, last_space = st.columns([9, 3, 1, 3, 1, 3, 9])
     
