@@ -39,7 +39,7 @@ beetax.run()
 ```
 ## Known Limitation
 - Retrieved context are stacked together across different sub-queries. Each context needs to be labeled with the associated sub-queries used
-- Calculation is still major flaw and needs further improvement by using function call
+- Calculation is a major flaw and needs further improvement by using function call
 
 ## Next Approach
 - Create knowledge graph for table:
