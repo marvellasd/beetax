@@ -33,7 +33,7 @@ LLM_API_KEY_1 = "*********************************"
 ```
 
 ## Usage
-```code
+```python
 beetax = BeeTax()
 beetax.run()
 ```
