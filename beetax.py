@@ -191,5 +191,5 @@ class BeeTax(TaxCalculator):
             count += 1
         
 
-bot = BeeTax()
-bot.run_conversation()
+# bot = BeeTax()
+# bot.run_conversation()

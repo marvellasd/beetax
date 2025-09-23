@@ -34,8 +34,9 @@ LLM_API_KEY_1 = "*********************************"
 
 ## Usage
 ```python
-beetax = BeeTax()
-beetax.run()
+from beetax import BeeTax
+bot = BeeTax()
+bot.run_conversation()
 ```
 ## Known Limitation
 - Retrieved context are stacked together across different sub-queries. Each context needs to be labeled with the associated sub-queries used
