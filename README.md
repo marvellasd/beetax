@@ -42,9 +42,12 @@ beetax.run()
 - Calculation is a major flaw and needs further improvement by using function call
 
 ## Next Approach
-- Create knowledge graph for table:
-    - Status penduduk (e.g kawin/tidak kawin, jumlah tanggungan)
-    - Lapisan Penghasilan Kena Pajak
-    - TER A, B, C
-- Modules and prompts for function calling
-- Connect knowledge graph to function modueles    
+### High priority
+- Add one case in tax calculation code:
+    - Case written in slide 35
+- Add md display before bot calls tax calculator function
+- Test entire pipeline thoroughly and find additional bug if exist
+### Low priority
+- Add searching api to retrieve latest information e.g current currency exchange rate, latest regulation
+- Reformat retrieved context to improve readability
+    

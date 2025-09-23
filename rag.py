@@ -99,6 +99,14 @@ class ContextRetriever:
         except Exception as e:
             self.client_gemini = self._switch_gemini_key()
 
+            response = self.client_gemini.chat.completions.create(
+                model="gemini-2.0-flash",
+                messages=messages,
+                temperature=0.1,
+                top_p=0.1
+            )
+            return response.choices[0].message.content.strip()
+
     
     @observe(name="split_user_query")
     def _split_user_query(self,user_query, chat_history):

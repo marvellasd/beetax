@@ -3,14 +3,12 @@ import numpy as np
 import calendar
 import json
 import pandas as pd
+from langfuse.decorators import observe
 
 class TaxCalculator():
     def __init__(self):
         # Value feteched from user input
-
-        # ideally is a list not an integer but for now use integer
         self.month_worked_list = None
-
         self.gaji = None
         self.tunjangan = None
         self.tunjangan_hari_raya_dict = None
@@ -20,7 +18,11 @@ class TaxCalculator():
         self.jkk = None 
         self.jkm = None
         self.iuran_pensiun = None
-        self.iuran_zakat = None
+        self.iuran_sumbangan = None
+        self.status_kewarganegaraan = None
+
+        # Processed input
+        self.number_of_month_worked = None
 
         # PTKP map
         with open('data/ptkp_map.json','r') as file:
@@ -44,8 +46,7 @@ class TaxCalculator():
             return threshold
         
     def _calculate_yearly_iuran(self):
-        number_of_month_worked = len([month for month in self.month_worked_list])
-        return self.iuran_pensiun*number_of_month_worked, self.iuran_zakat*number_of_month_worked
+        return self.iuran_pensiun*self.number_of_month_worked, self.iuran_sumbangan*self.number_of_month_worked
     
     def _calculate_yearly_neto(self, yearly_bruto, biaya_jabatan_setahun, iuran_pensiun_yearly, iuran_zakat_yearly):
         return yearly_bruto - biaya_jabatan_setahun - iuran_pensiun_yearly - iuran_zakat_yearly
@@ -78,13 +79,10 @@ class TaxCalculator():
         if sisa > 0:
             result += sisa * tarif[-1]
 
-        return result
+        if self.status_kewarganegaraan == "WNA":
+            result = result * (self.number_of_month_worked / 12)
 
-    def _calculate_dec_pph(self, yearly_pph, monthly_pph_till_nov):
-        return yearly_pph - monthly_pph_till_nov
-    
-    def _get_month_number(self, month_input):
-        return list(calendar.month_name).index(month_input.title())
+        return result
     
     def _search_ter_percentage(self, bruto_val_to_search, bruto_val_list):
         left = 0
@@ -102,27 +100,44 @@ class TaxCalculator():
                 left = mid + 1
 
         return -1
-
     
+    def _exchange_currency(self, result, currency):
+        exchange_rate = {
+            "USD": 16660.90,
+            "Euro": 19675.40,
+            "AUD": 11002.19,
+            "Yuan": 2341.76
+        }
+
+        for item in result:
+            result[item] = result[item] * exchange_rate[currency]
+        
+        return result
+
+    @observe()
     def calculate_tax(
         self,
         ter_category,
         month_worked_list : list,
         tunjangan_hari_raya_dict: dict = {},
         uang_lembur_dict: dict = {},
-        bonus_dict: dict = {}, 
+        bonus_dict: dict = {},
+        status_kewarganegaraan = "WNI", 
         gaji = 0, 
         tunjangan = 0, 
         natura = 0,  
         jkk = 0, 
         jkm = 0,
         iuran_pensiun = 0,
-        iuran_zakat = 0 
+        iuran_sumbangan = 0, 
+        currency = "Rp"
         ) -> dict:
 
         # Fetch user input
-        ## Assume its jan to dec for now
         self.month_worked_list = month_worked_list
+
+        # Get number of month worked
+        self.number_of_month_worked = len([month for month in self.month_worked_list])
 
         ## Might vary each month
         ## Assume these are dict and these are noted as the months where they get these extra salaries
@@ -137,7 +152,9 @@ class TaxCalculator():
         self.jkk = jkk
         self.jkm = jkm
         self.iuran_pensiun = iuran_pensiun
-        self.iuran_zakat = iuran_zakat
+        self.iuran_sumbangan = iuran_sumbangan
+        self.status_kewarganegaraan = status_kewarganegaraan
+        self.currency = currency
 
         # Fetch appropriate value based on mapping
         self.ptkp_map_value = self.ptkp_map[ter_category]
@@ -190,19 +207,19 @@ class TaxCalculator():
 
         yearly_neto = yearly_bruto - yearly_iuran_pensiun - yearly_iuran_zakat - yearly_biaya_jabatan
 
+        if self.status_kewarganegaraan == "WNA":
+            yearly_neto = yearly_neto * (12 / self.number_of_month_worked)
+
         # Calculate yearly Pph21
         pkp = self._calculate_pkp(yearly_neto, ter_value)
 
         yearly_pph = self._calculate_yearly_pph(pkp)
 
-        # Calculate monthly Pph21 until November
+        # Calculate monthly Pph21 until before last month
         monthly_pph = {}
 
-        for i, month in enumerate(monthly_bruto):
+        for month in list(monthly_bruto.keys())[:-1]:
 
-            if i == 11:
-                break
-                
             ter_percentage_index = self._search_ter_percentage(monthly_bruto[month],bruto_val_list)
             ter_percentage = ter_percentage_list[ter_percentage_index]
             monthly_pph[month] = monthly_bruto[month] * ter_percentage
@@ -218,7 +235,19 @@ class TaxCalculator():
             "pph_tahunan": yearly_pph,
             "pph_bulanan": monthly_pph
         }
-        return result
+
+        if currency != "Rp":
+            result = self._exchange_currency(result, currency)
+
+
+        function_output = {
+            "tool_call_id":"0",
+            "content":{
+                "function_name":"calculate_tax",
+                "content": result,
+            }
+        }
+        return function_output
     
 
 # Sample input case 1
@@ -233,33 +262,62 @@ class TaxCalculator():
 #     jkk = 0.005,
 #     jkm = 0.003,
 #     iuran_pensiun= 100_000,
-#     iuran_zakat= 200_000,
+#     iuran_sumbangan= 200_000,
 #     ter_category= "TK/1"
 # )
 
-# print(result)
+# # Sample input case 2
+# calculator = TaxCalculator()
+# result = calculator.calculate_tax(
+#     month_worked_list= ['September','October', 'November','December'],
+#     #tunjangan_hari_raya_dict = {'December': 60_000_000},
+#     #uang_lembur_dict= {'February': 5_000_000, 'May': 5_000_000},
+#     #bonus_dict= {'July': 20_000_000},
+#     gaji = 15_500_000,
+#     #tunjangan= 20_000_000,
+#     #jkk = 0.005,
+#     #jkm = 0.003,
+#     iuran_pensiun= 100_000,
+#     #iuran_sumbangan= 200_000,
+#     ter_category= "TK/0"
+# )
 
-# Sample input case 2
-calculator = TaxCalculator()
-result = calculator.calculate_tax(
-    month_worked_list= ['September','October', 'November','December'],
-    #tunjangan_hari_raya_dict = {'December': 60_000_000},
-    #uang_lembur_dict= {'February': 5_000_000, 'May': 5_000_000},
-    #bonus_dict= {'July': 20_000_000},
-    gaji = 15_500_000,
-    #tunjangan= 20_000_000,
-    #jkk = 0.005,
-    #jkm = 0.003,
-    iuran_pensiun= 100_000,
-    #iuran_zakat= 200_000,
-    ter_category= "TK/0"
-)
-
-print(result)
-
+# Sample input case 3
+# calculator = TaxCalculator()
+# result = calculator.calculate_tax(
+#     month_worked_list= ['September','October', 'November','December'],
+#     #tunjangan_hari_raya_dict = {'December': 60_000_000},
+#     #uang_lembur_dict= {'February': 5_000_000, 'May': 5_000_000},
+#     #bonus_dict= {'July': 20_000_000},
+#     gaji = 15_500_000,
+#     #tunjangan= 20_000_000,
+#     #jkk = 0.005,
+#     #jkm = 0.003,
+#     #iuran_pensiun= 100_000,
+#     iuran_sumbangan= 775_000,
+#     ter_category= "TK/0",
+#     status_kewarganegaraan="WNA"
+# )
 
 
+# # Sample input case 4
+# calculator = TaxCalculator()
+# result = calculator.calculate_tax(
+#     month_worked_list= ['September','October', 'November','December'],
+#     #tunjangan_hari_raya_dict = {'December': 60_000_000},
+#     #uang_lembur_dict= {'February': 5_000_000, 'May': 5_000_000},
+#     #bonus_dict= {'July': 20_000_000},
+#     gaji = 15_500_000,
+#     #tunjangan= 20_000_000,
+#     #jkk = 0.005,
+#     #jkm = 0.003,
+#     #iuran_pensiun= 100_000,
+#     iuran_sumbangan= 775_000,
+#     ter_category= "TK/0",
+#     status_kewarganegaraan="WNA"
+# )
 
+#print(result)
             
 
 
