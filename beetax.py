@@ -22,7 +22,8 @@ class BeeTax(TaxCalculator):
         self.retriever = ContextRetriever(dbpath="vectorDB", dbname="beetax", filename="data/Buku_PPh2126_Release_20240108_reformatted.pdf")
 
         self.function = {
-            "calculate_tax": self.calculate_tax
+            "calculate_tax_employee_should_pay": self.calculate_tax_employee_should_pay,
+            "calculate_tax_company_should_pay": self.calculate_tax_company_should_pay
         }
         self.tools_prompt = process_template_no_var('prompt/tool_prompt.jinja')
 
@@ -78,118 +79,137 @@ class BeeTax(TaxCalculator):
     def generate_single_chat_message(self,user_prompt,messages,flag, user_intent):
         messages.append(
            { 
-            "role": "user",
-            "content": user_prompt
+                "role": "user",
+                "content": user_prompt
            }
         )
 
+        # RAG is enabled and FC is disabled
         if user_intent == "knowledge_request":
             context = self.retriever.retrieve_contexts(messages)
-        else:
-            context = ""
+            system_prompt = process_template('prompt/chatbot_system_prompt_rag.jinja', {"context": context})
 
-        temp = {
-            "tool": self.tools_prompt,
-            "context": context
-        }
+            if flag == False:
+                messages.insert(0, {"role": "system", "content": system_prompt})
+                flag = True
+            else:
+                messages[0] = {"role": "system", "content": system_prompt}
 
-        system_prompt = process_template('prompt/chatbot_system_prompt_v2.jinja', temp)
-
-        if flag == False:
-            messages.insert(0, {"role": "system", "content": system_prompt})
-            flag = True
-        else:
-            messages[0] = {"role": "system", "content": system_prompt}
-
-        while True:
             response = self._infer(messages)
             messages.append({
                 "role": "assistant",
                 "content": response
             })
-
             
-            tools = parse_function(response,bfcl_format=False)
+            return messages, flag
+        
+        # RAG is disabled and FC is enabled
+        else:
+            temp = {
+                "tool": self.tools_prompt
+            }
+            system_prompt = process_template('prompt/chatbot_system_prompt_tool_v2.jinja', temp) 
 
-            if len(tools) == 1 and (tools[0]['function_name'] == 'FUNCTION_NOT_FOUND' or tools[0]['function_name'] == 'NONE'):
-                break
-            
-            
-            for tool in tools:
+            context = ""
 
-                if tool['function_name'] == 'FUNCTION_NOT_FOUND' or tool['function_name'] == 'NONE':
-                    continue
+            if flag == False:
+                messages.insert(0, {"role": "system", "content": system_prompt})
+                flag = True
+            else:
+                messages[0] = {"role": "system", "content": system_prompt}
 
-                # Check for function name
-                try:
-                    function_name = self.function[tool['function_name']]
-                except:
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": "N/A",
-                        "content": "Function not found in tools_dict"
-                    })
+            while True:
+                response = self._infer(messages)
+                messages.append({
+                    "role": "assistant",
+                    "content": response
+                })
 
-                    continue
+                max_retries = 3 
+                
+                # Retry once if invalid format
+                while max_retries > 0:
+                    try:
+                        tools = parse_function(response)
+                        break
+                    except:
+                        max_retries -=1
+                        messages.append({
+                            "role": "user",
+                            "content": "invalid response format! **Follow** the format stated in your system prompt"
+                        })
+                        response = self._infer(messages)
+                        messages.append({
+                            "role": "assistant",
+                            "content": response
+                        })
 
-                try:
-                    function_args = tool['args']
-                except:
-                    function_args = tool['parameters']
+                if len(tools) == 1 and (tools[0]['function_name'] == 'FUNCTION_NOT_FOUND' or tools[0]['function_name'] == 'NONE'):
+                    break
+                            
+                for tool in tools:
 
-                if "<MISSING>" in function_args.values() or function_args == {}:
-                    return messages, flag
+                    if tool['function_name'] == 'FUNCTION_NOT_FOUND' or tool['function_name'] == 'NONE' or tool['function_name'] == "determine_who_pays_the_tax":
+                        return messages, flag
+                
+                    # Check for function name
+                    try:
+                        function_name = self.function[tool['function_name']]
+                    except:
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": "N/A",
+                            "content": "Function not found in tools_dict"
+                        })
 
-                # Check for function arguments
-                try:    
+                        continue
+
+                    try:
+                        function_args = tool['args']
+                    except:
+                        function_args = tool['parameters']
+
+                    if "<MISSING>" in function_args.values() or function_args == {}:
+                        return messages, flag
+
+                    # Check for function arguments   
+                    # try:
                     function_output = function_name(**function_args)
                     content = json.dumps(function_output, indent=4)
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": function_output['tool_call_id'],
-                        "content": content
-                    })
+                    try:
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": function_output['tool_call_id'],
+                            "content": content
+                        })
+                    except Exception as e:
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": "N/A",
+                            "content": f"Error: {str(e)} calling {function_name.__name__} with args {function_args}"
+                        })
 
-                except Exception as e:
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": "N/A",
-                        "content": f"Error: {str(e)} calling {function_name.__name__} with args {function_args}"
-                    })
-
-        return messages, flag
-    
+            return messages, flag
+        
     @observe(name = "Classify user intent")
-    def _classify_user_intent(self, user_message):
+    def _classify_user_intent(self, user_message, message):
+
+        chat_history = [msg['content'] for msg in message[1:]]
         response = self._infer(
                 [{
                     "role": "user",
-                    "content": process_template("prompt/intent_classifier_prompt.jinja", {"user_message": user_message})
+                    "content": process_template("prompt/intent_classifier_prompt.jinja", {"chat_history": chat_history, "user_message": user_message})
                 }]
             )
         response = extract_json_dict(response)
         return response['intent']
 
-    def run_conversation(self):
-        messages = []
-        flag = False
+    def run_conversation(self, user_input, messages, flag):
 
-        count = 0
-        while True:
+        user_intent = self._classify_user_intent(user_input, messages)
             
-            # Delete this for production
-            user_message = input("Tester Message: ")
+        messages, flag = self.generate_single_chat_message(user_input, messages, flag, user_intent)
+        return messages, flag
 
-            user_intent = self._classify_user_intent(user_message)
-
-            if user_message.strip().lower() == 'exit':
-                print("Exiting the chatbot.")
-                break
-                
-            messages, flag = self.generate_single_chat_message(user_message, messages,flag, user_intent)
-
-            count += 1
         
-
-# bot = BeeTax()
-# bot.run_conversation()
+    

@@ -86,7 +86,7 @@ class ContextRetriever:
         return OpenAI(api_key=self.gemini_keys[self.gemini_current_idx], base_url=os.environ["GEMINI_BASE_URL"])
     
     @observe(name="llm_rewrite")
-    def _llm_rewrite(self,messages):
+    def _infer_gemini(self,messages):
         try:
             response = self.client_gemini.chat.completions.create(
                 model="gemini-2.0-flash",
@@ -122,7 +122,7 @@ class ContextRetriever:
             {"role": "user", "content": user_prompt}
         ]
 
-        response = self._llm_rewrite(messages)
+        response = self._infer_gemini(messages)
 
         sub_queries = json.loads(response)
 

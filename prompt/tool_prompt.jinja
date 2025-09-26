@@ -1,14 +1,22 @@
-{
+[
     "type": "function",
     "function": {
-        "name": "calculate_tax",
-        "description": "Calculates the tax based on various financial parameters.",
+        "name": "determine_who_pays_the_tax",
+        "description": "Always call this function beforehand everytime user needs help with tax calculation to determine which party (company or employee) that will pay the tax.This is a placeholder function. ONLY ASK "WHICH PARTY THAT PAYs THE TAX". It will return nothing",
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        },
+    "type": "function",
+    "function": {
+        "name": "calculate_tax_employee_should_pay",
+        "description": "Calculates the tax based on various financial parameters. This function only applies if the user explicitly specifies that the tax is paid by the employee themself",
         "parameters": {
             "type": "object",
             "properties": {
                 "ter_category": {
                     "type": "string",
-                    "description": "The TER category for tax calculation e.g TK/0, K/1. TK stands for "tidak kawin" (not in marriage), K stands for "kawin" (in marriage). The number at the end signifies the amount "tanggungan" or dependants that the user carries. Based on user answer, determine if the category is TK/0, TK/1, etc,
+                    "description": "The TER category for tax calculation e.g TK/0, K/1. TK stands for "tidak kawin" (not in marriage), K stands for "kawin" (in marriage). The number at the end signifies the amount "tanggungan" or dependants that the user carries. The law only specifies these number's maximum to 3. Hence, if user inputted more than 3, revert it to 3. Based on user answer, determine if the category is TK/0, TK/1, etc."
                     "enum": [
                         "TK/0",
                         "TK/1",
@@ -73,7 +81,7 @@
                 },
                 "status_kewarganegaraan": {
                     "type": "string",
-                    "description": "Citizenship status (e.g., WNI).",
+                    "description": "Citizenship status (e.g., WNI).WNI stands for 'Warga Negara Indonesia' and WNA stands for 'Warga Negara Asing' If user is not 'Indonesian', then they are categorized as WNA",
                     "default": "WNI",
                     "enum": [
                         "WNA",
@@ -92,7 +100,7 @@
                 },
                 "natura": {
                     "type": "number",
-                    "description": "Natura benefit amount.",
+                    "description": "Natura benefit amount. This includes everything from "beasiswa",
                     "default": 0
                 },
                 "jkk": {
@@ -133,5 +141,39 @@
                 "gaji",
             ]
         }
+    },
+    "type": "function",
+    "function": {
+        "name": "calculate_tax_company_should_pay",
+        "description": "Calculates the tax based on various financial parameters. This function only applies if the user explicitly specifies that the tax is paid by company.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "ter_category": {
+                    "type": "string",
+                    "description": "The TER category for tax calculation e.g TK/0, K/1. TK stands for "tidak kawin" (not in marriage), K stands for "kawin" (in marriage). The number at the end signifies the amount "tanggungan" or dependants that the user carries. The law only specifies these number's maximum to 3. Hence, if user inputted more than 3, revert it to 3. Based on user answer, determine if the category is TK/0, TK/1, etc."
+                    "enum": [
+                        "TK/0",
+                        "TK/1",
+                        "K/0",
+                        "TK/2",
+                        "K/1",
+                        "TK/3",
+                        "K/2",
+                        "K/3"
+                    ]
+                },
+                "bruto_bulanan": {
+                    "type": "number",
+                    "description": "amount of monthly gross income.",
+                    "default": 0
+                }
+                }
+            },
+            "required": [
+                "ter_category",
+                "bruto_bulanan",
+            ]
+        }
     }
-}
+]

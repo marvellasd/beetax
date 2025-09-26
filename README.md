@@ -40,14 +40,12 @@ bot.run_conversation()
 ```
 ## Known Limitation
 - Retrieved context are stacked together across different sub-queries. Each context needs to be labeled with the associated sub-queries used
-- Calculation is a major flaw and needs further improvement by using function call
+- With kimi LLM, function call is somewhat consistent but have less model context length. Llama have longer context length but inconsisten function call format
 
 ## Next Approach
-### High priority
-- Add one case in tax calculation code:
-    - Case written in slide 35
-- Add md display before bot calls tax calculator function
-- Test entire pipeline thoroughly and find additional bug if exist
+### High priority 
+- Modify to parallel process for retrieving sub-queries
+
 ### Low priority
 - Add searching api to retrieve latest information e.g current currency exchange rate, latest regulation
 - Reformat retrieved context to improve readability

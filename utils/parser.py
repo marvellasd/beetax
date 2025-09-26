@@ -63,3 +63,13 @@ def parse_function(text,bfcl_format = False):
         return func_dicts
 
     return parsed_tools
+
+def clean_response(text):
+    if text.find('<Response and tool call response>')!= -1:
+        start_index = text.find('<Response and tool call response>')
+        start_index += len('<Response and tool call response>')
+        end_index =  text.find('<End of response and tool call response>')
+        return text[start_index:end_index]
+
+    else:
+        return text
