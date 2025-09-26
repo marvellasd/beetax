@@ -7,7 +7,7 @@ langchain_chroma
 langfuse
 dotenv
 langfuse == 2.59.7
-openai
+openai == 1.109.1
 streamlit
 uuid
 gspread
