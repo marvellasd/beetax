@@ -14,7 +14,7 @@ HF_TOKEN = "<HUGGING_FACE_ACCESS_TOKEN>"
 EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
 
 # LLM
-MODEL = "deepseek-r1-distill-llama-70b"
+MODEL = "moonshotai/kimi-k2-instruct-0905"
 
 # LANGFUSE
 LANGFUSE_SECRET_KEY="sk-lf-8bb087fd-3d3c-4e35-9420-4cd27d8660b6"
@@ -26,17 +26,15 @@ GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/"
 GEMINI_API_KEY_1 = "********************************"
 
 # LLM
-MODEL = "deepseek-r1-distill-llama-70b"
+MODEL = "moonshotai/kimi-k2-instruct-0905"
 LLM_BASE_URL = "https://api.groq.com/openai/v1"
 
 LLM_API_KEY_1 = "*********************************"
 ```
 
 ## Usage
-```python
-from beetax import BeeTax
-bot = BeeTax()
-bot.run_conversation()
+```bash
+streamlit run interface.py
 ```
 ## Known Limitation
 - Retrieved context are stacked together across different sub-queries. Each context needs to be labeled with the associated sub-queries used

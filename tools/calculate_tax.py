@@ -221,20 +221,20 @@ class TaxCalculator():
             self.iuran_pensiun = self._exchange_currency_to_local(self.iuran_pensiun, self.currency)
             self.iuran_sumbangan = self._exchange_currency_to_local(self.iuran_sumbangan, self.currency)
 
-        if gaji < 5_000_000:
-            return {
-            "tool_call_id":"0",
-            "content":{
-                "function_name":"calculate_tax_employee_should_pay",
-                "content": f"Dikarenakan gaji anda {gaji} dibawah Rp5.000.000, maka sesuai dengnan peraturan yang berlaku, gaji anda tidak dikenakan pajak",
-            }
-        }
-
         # Fetch appropriate value based on mapping
         self.ptkp_map_value = self.ptkp_map[ter_category]
         
         # Grab ter_value (PTKP)
         ter_value = self.ptkp_map_value[-1]
+
+        if gaji < ter_value/12:
+            return {
+            "tool_call_id":"0",
+            "content":{
+                "function_name":"calculate_tax_employee_should_pay",
+                "content": f"Dikarenakan status anda tergolong pada {ter_category} dan gaji bulanan anda {gaji} dibawah ketentuan gaji minimal yang dikenakan pph21 {ter_value/12}, maka sesuai dengan peraturan yang berlaku, gaji anda tidak dikenakan pajak",
+            }
+        }
 
         # Read table
         ter_mapping = pd.read_csv(f"data/{self.ptkp_map_value[0]}.csv")
@@ -392,9 +392,6 @@ class TaxCalculator():
             }
         }
         return function_output
-
-
-        
 
             
 

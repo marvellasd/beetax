@@ -2,7 +2,7 @@
     "type": "function",
     "function": {
         "name": "determine_who_pays_the_tax",
-        "description": "Always call this function beforehand everytime user needs help with tax calculation to determine which party (company or employee) that will pay the tax.This is a placeholder function. ONLY ASK "WHICH PARTY THAT PAYs THE TAX". It will return nothing",
+        "description": "Always call this function beforehand everytime user needs help with tax calculation to determine which party (company or employee) that will pay the tax.This is a placeholder function. When calling this function, you must ONLY ASK "WHICH PARTY THAT PAYs THE TAX". Do not ask anything else. It will return nothing",
         "parameters": {
             "type": "object",
             "properties": {}
@@ -100,7 +100,7 @@
                 },
                 "natura": {
                     "type": "number",
-                    "description": "Natura benefit amount. This includes everything from "beasiswa",
+                    "description": "Natura benefit amount. Additional benefits received from company ranging from valued items like transports, devices, houses, food & beverages, health facilities even scholarship. Anything additional that is not "tunjangan", "bonuses" or "overtime pay",
                     "default": 0
                 },
                 "jkk": {
