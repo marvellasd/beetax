@@ -6,7 +6,7 @@ torch
 langchain_chroma
 langfuse
 dotenv
-langfuse
+langfuse == 2.59.7
 openai
 streamlit
 uuid
