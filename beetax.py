@@ -128,7 +128,7 @@ class BeeTax(TaxCalculator):
                 # Retry once if invalid format
                 while max_retries > 0:
                     try:
-                        llm_answer = clean_response(response,"FC")
+                        llm_answer = clean_response(response,usage = "FC")
                         tools = parse_function(response)
                         break
                     except:
