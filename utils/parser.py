@@ -72,4 +72,4 @@ def clean_response(text):
         return text[start_index:end_index]
 
     else:
-        return text
+        raise ValueError("Invalid format")

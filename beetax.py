@@ -5,7 +5,7 @@ from langfuse.decorators import observe
 from langfuse.openai import OpenAI
 from dotenv import load_dotenv
 from utils.jinjaProcessor import process_template_no_var
-from utils.parser import extract_json_dict, parse_function
+from utils.parser import extract_json_dict, parse_function, clean_response
 from tools.calculate_tax import TaxCalculator
 import json
 import os
@@ -128,6 +128,7 @@ class BeeTax(TaxCalculator):
                 # Retry once if invalid format
                 while max_retries > 0:
                     try:
+                        llm_answer = clean_response(response)
                         tools = parse_function(response)
                         break
                     except:
