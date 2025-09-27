@@ -123,7 +123,7 @@ class BeeTax(TaxCalculator):
                     "content": response
                 })
 
-                max_retries = 3 
+                max_retries = 5 
                 
                 # Retry once if invalid format
                 while max_retries > 0:
