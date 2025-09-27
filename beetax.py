@@ -110,8 +110,6 @@ class BeeTax(TaxCalculator):
             }
             system_prompt = process_template('prompt/chatbot_system_prompt_tool_v2.jinja', temp) 
 
-            context = ""
-
             if flag == False:
                 messages.insert(0, {"role": "system", "content": system_prompt})
                 flag = True

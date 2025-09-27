@@ -38,13 +38,13 @@ streamlit run interface.py
 ```
 ## Known Limitation
 - Retrieved context are stacked together across different sub-queries. Each context needs to be labeled with the associated sub-queries used
-- With kimi LLM, function call is somewhat consistent but have less model context length. Llama have longer context length but inconsisten function call format
+- With kimi LLM, function call is somewhat consistent but have less model context length (cuz we poor). Llama have longer context length but inconsisten function call format
 
 ## Next Approach
 ### High priority 
 - Modify to parallel process for retrieving sub-queries
+- Retry sometimes does not work
 
 ### Low priority
-- Add searching api to retrieve latest information e.g current currency exchange rate, latest regulation
 - Reformat retrieved context to improve readability
     
