@@ -142,6 +142,11 @@ class BeeTax(TaxCalculator):
                             "content": response
                         })
 
+                        # Remove unnecessary messages
+                        del messages[-2]
+                        del messages[-2]
+                        
+
                 if len(tools) == 1 and (tools[0]['function_name'] == 'FUNCTION_NOT_FOUND' or tools[0]['function_name'] == 'NONE'):
                     break
                             

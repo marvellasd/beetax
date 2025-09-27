@@ -85,7 +85,7 @@ class ContextRetriever:
         self.gemini_current_idx = (self.gemini_current_idx + 1) % len(self.gemini_keys)
         return OpenAI(api_key=self.gemini_keys[self.gemini_current_idx], base_url=os.environ["GEMINI_BASE_URL"])
     
-    @observe(name="llm_rewrite")
+    @observe(name="gemini_infer")
     def _infer_gemini(self,messages):
         try:
             response = self.client_gemini.chat.completions.create(
