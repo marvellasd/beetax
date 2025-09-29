@@ -123,16 +123,16 @@ class BeeTax(TaxCalculator):
                     "content": response
                 })
 
-                max_retries = 5 
+                max_retries = 0 
                 
                 # Retry once if invalid format
-                while max_retries > 0:
+                while max_retries < 5:
                     try:
                         llm_answer = clean_response(response,usage = "FC")
                         tools = parse_function(response)
                         break
                     except:
-                        max_retries -=1
+                        max_retries +=1
                         messages.append({
                             "role": "user",
                             "content": "invalid response format! **Follow** the format stated in your system prompt"
