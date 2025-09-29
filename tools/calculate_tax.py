@@ -304,19 +304,29 @@ class TaxCalculator():
         # Calculate monthly Pph21 until before last month
         monthly_pph = {}
         self.calculation_explanation += f"""Rumus perhitungan pph bulanan (tidak termasuk bulan terakhir bekerja) adalah bruto bulanan x persentase ter (yang didapatkan sesuai dengan bruto bulanan)\n"""
-        for month in list(monthly_bruto.keys())[:-1]:
-            ter_percentage_index = self._search_ter_percentage(monthly_bruto[month],bruto_val_list)
-            ter_percentage = ter_percentage_list[ter_percentage_index]
-            self.calculation_explanation += f"""Pph bulan {month} = (Bruto bulan {month}){monthly_bruto[month]} x {ter_percentage*100}% (didapatkan karena bruto bulan ini berada di range {ter_lapisan_range[ter_percentage_index]})"""
-            monthly_pph[month] = monthly_bruto[month] * ter_percentage
-            self.calculation_explanation += f"""Pph bulan {month} = {monthly_pph[month]}"""
+        if self.number_of_month_worked > 1:
+            for month in list(monthly_bruto.keys())[:-1]:
+                ter_percentage_index = self._search_ter_percentage(monthly_bruto[month],bruto_val_list)
+                ter_percentage = ter_percentage_list[ter_percentage_index]
+                self.calculation_explanation += f"""Pph bulan {month} = (Bruto bulan {month}){monthly_bruto[month]} x {ter_percentage*100}% (didapatkan karena bruto bulan ini berada di range {ter_lapisan_range[ter_percentage_index]})"""
+                monthly_pph[month] = monthly_bruto[month] * ter_percentage
+                self.calculation_explanation += f"""Pph bulan {month} = {monthly_pph[month]}"""
         
-        pph_till_before_last_month_sum = sum([monthly_pph[month] for month in monthly_pph])
+            pph_till_before_last_month_sum = sum([monthly_pph[month] for month in monthly_pph])
 
-        self.calculation_explanation += f"""Pph bulan {month_worked_list[-1]} didapatkan dari perhitungan pph pasal 21 terutang setahun dikurangi oleh total pph dari bulan pertama hingga bulann kedua terakhir ({month_worked_list[-2]})\n"""
-        monthly_pph[month_worked_list[-1]] = yearly_pph - pph_till_before_last_month_sum
+            self.calculation_explanation += f"""Pph bulan {month_worked_list[-1]} didapatkan dari perhitungan pph pasal 21 terutang setahun dikurangi oleh total pph dari bulan pertama hingga bulann kedua terakhir ({month_worked_list[-2]})\n"""
+            monthly_pph[month_worked_list[-1]] = yearly_pph - pph_till_before_last_month_sum
 
-        self.calculation_explanation += f"""Pph bulan {month_worked_list[-1]} = {yearly_pph} - {pph_till_before_last_month_sum}\n"""
+            self.calculation_explanation += f"""Pph bulan {month_worked_list[-1]} = {yearly_pph} - {pph_till_before_last_month_sum}\n"""
+
+        else:
+            ter_percentage_index = self._search_ter_percentage(monthly_bruto[month_worked_list[0]],bruto_val_list)
+            ter_percentage = ter_percentage_list[ter_percentage_index]
+            self.calculation_explanation += f"""Pph bulan {month_worked_list[0]} = (Bruto bulan {month_worked_list[0]}){monthly_bruto[month_worked_list[0]]} x {ter_percentage*100}% (didapatkan karena bruto bulan ini berada di range {ter_lapisan_range[ter_percentage_index]})"""
+            monthly_pph[month_worked_list[0]] = monthly_bruto[month_worked_list[0]] * ter_percentage
+            self.calculation_explanation += f"""Pph bulan {month_worked_list[0]} = {monthly_pph[month_worked_list[0]]}"""
+
+
         if monthly_pph[month_worked_list[-1]] < 0:
             self.calculation_explanation += f"""Pph bulan yang lebih dipotong pada bulan {month_worked_list[-1]} = {abs(monthly_pph[month_worked_list[-1]])}\n"""
         else:
