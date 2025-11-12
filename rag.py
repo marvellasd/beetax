@@ -1,4 +1,4 @@
-from langchain.text_splitters import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from chromadb import EmbeddingFunction
 import os
 import json

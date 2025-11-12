@@ -16,4 +16,4 @@ pandas
 datetime
 gspread_dataframe
 pytz
-langchain
+langchain==0.0.350
