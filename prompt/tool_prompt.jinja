@@ -1,0 +1,180 @@
+[
+    "type": "function",
+    "function": {
+        "name": "determine_who_pays_the_tax",
+        "description": "Always call this function beforehand everytime user needs help with tax calculation to determine which party (company or employee) that will pay the tax.This is a placeholder function. When calling this function, you must ONLY ASK "WHICH PARTY THAT PAYS THE TAX". Do not ask anything else. It will return nothing",
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        },
+    "type": "function",
+    "function": {
+        "name": "calculate_tax_employee_should_pay",
+        "description": "Calculates the tax based on various financial parameters. This function only applies if the user explicitly specifies that the tax is paid by the employee themself",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "ter_category": {
+                    "type": "string",
+                    "description": "The TER category for tax calculation e.g TK/0, K/1. TK stands for "tidak kawin" (not in marriage), K stands for "kawin" (in marriage). The number at the end signifies the amount "tanggungan" or dependants that the user carries. The law only specifies these number's maximum to 3. Hence, if user inputted more than 3, revert it to 3. Based on user answer, determine if the category is TK/0, TK/1, etc."
+                    "enum": [
+                        "TK/0",
+                        "TK/1",
+                        "K/0",
+                        "TK/2",
+                        "K/1",
+                        "TK/3",
+                        "K/2",
+                        "K/3"
+                    ]
+                },
+                "month_worked_list": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "A list of months that the user has worked.",
+                    "enum": [
+                        "January",
+                        "February",
+                        "March",
+                        "April",
+                        "May",
+                        "June",
+                        "July",
+                        "August",
+                        "September",
+                        "October",
+                        "November",
+                        "December"
+                    ]
+                },
+                "tunjangan_hari_raya_dict": {
+                    "type": "object",
+                    "description": "Dictionary of holiday allowances.",
+                    "Properties": {
+                        "the name of month e.g May, June, December": {
+                            "type": "number",
+                            "description": "the amount of allowances obtained on that month"
+                        }
+                    }
+                },
+                "uang_lembur_dict": {
+                    "type": "object",
+                    "description": "Dictionary of overtime pay.",
+                    "Properties": {
+                        "the name of month e.g May, June, December": {
+                            "type": "number",
+                            "description": "the amount of overtime pay obtained on that month"
+                        }
+                    }
+                },
+                "bonus_dict": {
+                    "type": "object",
+                    "description": "Dictionary of salary bonuses.",
+                    "Properties": {
+                        "the name of month e.g May, June, December": {
+                            "type": "number",
+                            "description": "the amount of salary bonuses obtained on that month"
+                        }
+                    }
+                },
+                "status_kewarganegaraan": {
+                    "type": "string",
+                    "description": "Citizenship status (e.g., WNI).WNI stands for 'Warga Negara Indonesia' and WNA stands for 'Warga Negara Asing' If user is not 'Indonesian', then they are categorized as WNA",
+                    "default": "WNI",
+                    "enum": [
+                        "WNA",
+                        "WNI"
+                    ]
+                },
+                "gaji": {
+                    "type": "number",
+                    "description": "Salary amount.",
+                    "default": 0
+                },
+                "tunjangan": {
+                    "type": "number",
+                    "description": "Allowance amount.",
+                    "default": 0
+                },
+                "natura": {
+                    "type": "number",
+                    "description": "Natura benefit amount. Additional benefits received from company ranging from valued items like transports, devices, houses, food & beverages, health facilities even scholarship. Anything additional that is not "tunjangan", "bonuses" or "overtime pay",
+                    "default": 0
+                },
+                "jkk": {
+                    "type": "number",
+                    "description": "The percentage of JKK (Jaminan Kecelakaan Kerja). Before inserting this as the parameter value convert it to decimal e.g 0.4% -> 0.004",
+                    "default": 0
+                },
+                "jkm": {
+                    "type": "number",
+                    "description": "The percetange of JKM (Jaminan Kematian). Before inserting this as the parameter value convert it to decimal e.g 0.4% -> 0.004",
+                    "default": 0
+                },
+                "iuran_pensiun": {
+                    "type": "number",
+                    "description": "Pension contribution amount.",
+                    "default": 0
+                },
+                "iuran_sumbangan": {
+                    "type": "number",
+                    "description": "Donation or contribution amount.",
+                    "default": 0
+                },
+                "currency": {
+                    "type": "string",
+                    "description": "The type of currency e.g Rp, USD",
+                    "default": "Rp"
+                    "enum": [
+                        "Rp", 
+                        "USD", 
+                        "Euro", 
+                        "AUD", 
+                        "Yuan"
+                    ]
+                }
+            },
+            "required": [
+                "ter_category",
+                "gaji",
+                "month_worked_list"
+            ]
+        }
+    },
+    "type": "function",
+    "function": {
+        "name": "calculate_tax_company_should_pay",
+        "description": "Calculates the tax based on various financial parameters. This function only applies if the user explicitly specifies that the tax is paid by company.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "ter_category": {
+                    "type": "string",
+                    "description": "The TER category for tax calculation e.g TK/0, K/1. TK stands for "tidak kawin" (not in marriage), K stands for "kawin" (in marriage). The number at the end signifies the amount "tanggungan" or dependants that the user carries. The law only specifies these number's maximum to 3. Hence, if user inputted more than 3, revert it to 3. Based on user answer, determine if the category is TK/0, TK/1, etc."
+                    "enum": [
+                        "TK/0",
+                        "TK/1",
+                        "K/0",
+                        "TK/2",
+                        "K/1",
+                        "TK/3",
+                        "K/2",
+                        "K/3"
+                    ]
+                },
+                "bruto_bulanan": {
+                    "type": "number",
+                    "description": "amount of monthly gross income.",
+                    "default": 0
+                }
+                }
+            },
+            "required": [
+                "ter_category",
+                "bruto_bulanan",
+            ]
+        }
+    }
+]

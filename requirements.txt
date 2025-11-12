@@ -2,12 +2,13 @@ pysqlite3-binary
 typing
 sentence_transformers
 langchain_core
+langchain_community
 torch
 langchain_chroma
 langfuse
 dotenv
-langfuse
-openai
+langfuse == 2.59.7
+openai == 1.85
 streamlit
 uuid
 gspread
@@ -15,3 +16,4 @@ pandas
 datetime
 gspread_dataframe
 pytz
+langchain
