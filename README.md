@@ -32,19 +32,5 @@ LLM_BASE_URL = "https://api.groq.com/openai/v1"
 LLM_API_KEY_1 = "*********************************"
 ```
 
-## Usage
-```bash
-streamlit run interface.py
-```
-## Known Limitation
-- Retrieved context are stacked together across different sub-queries. Each context needs to be labeled with the associated sub-queries used
-- With kimi LLM, function call is somewhat consistent but have less model context length (cuz we poor). Llama have longer context length but inconsisten function call format
-
-## Next Approach
-### High priority 
-- Modify to parallel process for retrieving sub-queries
-- Retry sometimes does not work
-
-### Low priority
-- Reformat retrieved context to improve readability
-    
+## Interface
+![alt text](res/interface.png)
